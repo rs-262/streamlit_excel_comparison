@@ -1,19 +1,49 @@
 import streamlit as st
 import pandas as pd
 
+#st.set_page_config(layout="wide")
+
+# st.markdown(
+#     """
+#     <style>
+#     .body {background-color:lightblue;} 
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+
+# LINK TO THE CSS FILE
+with open('style.css') as f:
+ st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html = True)
+
 st.title('Excel File Comparison App')
+st.divider()
+
+# side bar
+with st.sidebar:
+    st.write("add content here")
+
 
 st.subheader("Drop the current months file here:")
 
-# widget for uploading current month file
-current_month_file = st.file_uploader('Upload a file',key='current')
+with st.container():
+    # widget for uploading current month file
+    current_month_file = st.file_uploader('Upload a file',key='current')
 
-# if else to display dataframe head if uploaded
-if not current_month_file:
-    st.write("no file uploaded yet")
-else:
-    current_month_df = pd.read_excel(current_month_file)
-    st.write(current_month_df.head(1))
+    # if else to display dataframe head if uploaded
+    if not current_month_file: # if false
+        st.write("No file uploaded yet")
+    elif current_month_file: # if true
+        current_string = current_month_file.name # gets file name as string
+        # validates that it's an excel file 
+        if current_string.lower().endswith(('.xls', '.xlsx', '.xlsm')):
+            current_month_df = pd.read_excel(current_month_file)
+            st.write(current_month_df.head(1))
+        else:
+            st.write('<p style="color:red;">File type is invalid please upload an excel file with exension .xls, .xlsx or .xlsm</p>', 
+            unsafe_allow_html=True)
+
+st.divider()
 
 
 st.subheader("Drop the previous months file here")
@@ -23,10 +53,19 @@ previous_month_file = st.file_uploader('Upload a file',key='previous')
 
 # if else to display dataframe head if uploaded
 if not previous_month_file:
-    st.write("no file uploaded yet")
-else:
-    previous_month_df = pd.read_excel(previous_month_file)
-    st.write(previous_month_df.head(1))
+    st.write("No file uploaded yet")
+elif previous_month_file:
+    previous_string = previous_month_file.name # gets file name as string
+    # validates that it's an excel file 
+    if previous_string.lower().endswith(('.xls', '.xlsx', '.xlsm')):
+        previous_month_df = pd.read_excel(previous_month_file)
+        st.write(previous_month_df.head(1))
+    else:
+        st.write('<p style="color:red;">File type is invalid please upload an excel file with exension .xls, .xlsx or .xlsm</p>', 
+        unsafe_allow_html=True)
+
+
+st.divider()
 
 # function for comparing the file
 
@@ -109,13 +148,18 @@ def compare_file(current,previous):
 
     return styled_df
 
+
 st.subheader("Click Button to run comparison")
 run_comparison = st.button("run comparison")
 
 st.write(run_comparison)
 
+# this performs action when button is clicked
 if run_comparison:
-    st.write(compare_file(current_month_df,previous_month_df))
+    output_df = compare_file(current_month_df,previous_month_df)
+    st.write(output_df)
+else:
+    st.write("")
 
 
     # this prints to excel
