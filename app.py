@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 
 #st.set_page_config(layout="wide")
 
@@ -22,6 +23,10 @@ st.divider()
 # side bar
 with st.sidebar:
     st.write("add content here")
+
+# to control download button, running comparison below changes this so button will work
+output_df = pd.DataFrame()
+output_ready = True
 
 
 st.subheader("Drop the current months file here:")
@@ -158,12 +163,30 @@ st.write(run_comparison)
 if run_comparison:
     output_df = compare_file(current_month_df,previous_month_df)
     st.write(output_df)
+    output_ready = False
 else:
-    st.write("")
+    st.write("")    
+
+# This works!!!
+def df_to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, index=False,header=True,sheet_name='Sheet1')
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
+
+df_excel = df_to_excel(output_df)
 
 
-    # this prints to excel
-   # styled_df.to_excel(f'U:\Data Files\Python Files\File Comparison\Excel_diff{datetime.now().strftime("_%d-%m-%Y-%H-%M-%S")}.xlsx',index=False,header=True)
+
+st.download_button(
+    label="Download Excel worksheets",
+    data=df_excel,
+    file_name="compared_file.xlsx",
+    mime="application/vnd.ms-excel",
+    disabled=output_ready,
+)
 
 
 
