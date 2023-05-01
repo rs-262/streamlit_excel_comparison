@@ -2,16 +2,7 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-#st.set_page_config(layout="wide")
-
-# st.markdown(
-#     """
-#     <style>
-#     .body {background-color:lightblue;} 
-#     </style>
-#     """,
-#     unsafe_allow_html=True
-# )
+st.set_page_config(layout="wide")
 
 # LINK TO THE CSS FILE
 with open('style.css') as f:
@@ -24,9 +15,11 @@ st.divider()
 with st.sidebar:
     st.write("add content here")
 
-# to control download button, running comparison below changes this so button will work
+# to control comparison and download buttons, running comparison below changes this so button will work
 output_df = pd.DataFrame()
 output_ready = True
+button_bool = True
+
 
 
 st.subheader("Drop the current months file here:")
@@ -43,7 +36,7 @@ with st.container():
         # validates that it's an excel file 
         if current_string.lower().endswith(('.xls', '.xlsx', '.xlsm')):
             current_month_df = pd.read_excel(current_month_file)
-            st.write(current_month_df.head(1))
+            st.write('File uploaded succesfully!')
         else:
             st.write('<p style="color:red;">File type is invalid please upload an excel file with exension .xls, .xlsx or .xlsm</p>', 
             unsafe_allow_html=True)
@@ -56,7 +49,7 @@ st.subheader("Drop the previous months file here")
 # widget for uploading current month file
 previous_month_file = st.file_uploader('Upload a file',key='previous')
 
-# if else to display dataframe head if uploaded
+# if else for validation
 if not previous_month_file:
     st.write("No file uploaded yet")
 elif previous_month_file:
@@ -64,7 +57,7 @@ elif previous_month_file:
     # validates that it's an excel file 
     if previous_string.lower().endswith(('.xls', '.xlsx', '.xlsm')):
         previous_month_df = pd.read_excel(previous_month_file)
-        st.write(previous_month_df.head(1))
+        st.write('File uploaded succesfully!')
     else:
         st.write('<p style="color:red;">File type is invalid please upload an excel file with exension .xls, .xlsx or .xlsm</p>', 
         unsafe_allow_html=True)
@@ -153,40 +146,48 @@ def compare_file(current,previous):
 
     return styled_df
 
-
-st.subheader("Click Button to run comparison")
-run_comparison = st.button("run comparison")
-
-st.write(run_comparison)
-
-# this performs action when button is clicked
-if run_comparison:
-    output_df = compare_file(current_month_df,previous_month_df)
-    st.write(output_df)
-    output_ready = False
-else:
-    st.write("")    
-
-# This works!!!
+# function to turn df into a downloadable excel file.
 def df_to_excel(df):
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    df.to_excel(writer, index=False,header=True,sheet_name='Sheet1')
+    df.to_excel(writer,index=False,header=True,sheet_name='Sheet1')
     writer.save()
     processed_data = output.getvalue()
     return processed_data
 
-df_excel = df_to_excel(output_df)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Click button to run comparison")
+    if current_month_file and previous_month_file:
+        button_bool = False
+
+    run_comparison = st.button(label="Run Comparison",disabled=button_bool)
+
+    #st.write(run_comparison)
+
+    # this performs action when button is clicked
+    if run_comparison:
+        output_df = compare_file(current_month_df,previous_month_df)
+        output_ready = False
+
+with col2:
+    st.subheader("Click button to download excel file")
+    df_excel = df_to_excel(output_df)
 
 
 
-st.download_button(
-    label="Download Excel worksheets",
-    data=df_excel,
-    file_name="compared_file.xlsx",
-    mime="application/vnd.ms-excel",
-    disabled=output_ready,
-)
+    st.download_button(
+        label="Download Excel worksheets",
+        data=df_excel,
+        file_name="compared_file.xlsx",
+        mime="application/vnd.ms-excel",
+        disabled=output_ready,
+    )
+
+if output_ready == False:
+    st.write(output_df)
 
 
 
